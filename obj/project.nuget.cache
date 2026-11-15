@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "jt0tR/ord+g=",
+  "success": true,
+  "projectFilePath": "C:\\ExamnBlazor\\ExamenBlazor\\ExamenBlazor.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\MSII\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.11\\microsoft.aspnetcore.app.internal.assets.10.0.11.nupkg.sha512",
+    "C:\\Users\\MSII\\.nuget\\packages\\microsoft.entityframeworkcore.tools\\11.0.0\\microsoft.entityframeworkcore.tools.11.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
