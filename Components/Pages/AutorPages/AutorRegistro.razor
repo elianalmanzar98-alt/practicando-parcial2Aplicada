@@ -1,0 +1,160 @@
+@page "/Autor/Registro"
+@page "/Autor/Registro/{IdAutor:int}"
+@inject AutorService autorService
+@rendermode InteractiveServer
+
+<PageTitle>Registro de Autores</PageTitle>
+
+<EditForm Model="autor" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="card shadow-lg m-4">
+        <div class="card-header">
+            <h5 class="mb-0">Registro de Autores</h5>
+        </div>
+
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(mensaje))
+            {
+                <div class="alert alert-@tipoMensaje alert-dismissible fade show">
+                    @mensaje
+                    <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Autor Id</label>
+                <div class="input-group">
+                    <InputNumber class="form-control" @bind-Value="autor.IdAutor" />
+                    <button type="button" class="btn btn-outline-primary" @onclick="Buscar">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nombres</label>
+                <InputText class="form-control" @bind-Value="autor.Nombres" />
+                <ValidationMessage For="@(() => autor.Nombres)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nacionalidad</label>
+                <InputText class="form-control" @bind-Value="autor.Nacionalidad" />
+                <ValidationMessage For="@(() => autor.Nacionalidad)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Fecha de Nacimiento</label>
+                <InputDate class="form-control" @bind-Value="autor.FechaNacimiento" />
+                <ValidationMessage For="@(() => autor.FechaNacimiento)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Sueldo</label>
+                <InputNumber class="form-control" @bind-Value="autor.Sueldo" />
+                <ValidationMessage For="@(() => autor.Sueldo)" />
+            </div>
+        </div>
+
+        <div class="card-footer text-center">
+            <a href="/Autor/Index" class="btn btn-secondary"><i class="bi bi-list-ul me-1"></i> Consulta</a>
+            <button type="button" class="btn btn-outline-primary" @onclick="Nuevo"><i class="bi bi-file-earmark-plus me-1"></i> Nuevo</button>
+            <button type="submit" class="btn btn-outline-success"><i class="bi bi-floppy me-1"></i> Guardar</button>
+            <button type="button" class="btn btn-outline-danger" @onclick="Eliminar"><i class="bi bi-trash me-1"></i> Eliminar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int IdAutor { get; set; }
+
+    private Autores autor = new();
+    private string? mensaje;
+    private string tipoMensaje = "success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IdAutor > 0)
+        {
+            autor.IdAutor = IdAutor;
+            await Buscar();
+        }
+    }
+
+    private void Notificar(string tipo, string texto)
+    {
+        tipoMensaje = tipo;
+        mensaje = texto;
+    }
+
+    private void Nuevo()
+    {
+        autor = new Autores();
+        mensaje = null;
+    }
+
+    private async Task Buscar()
+    {
+        mensaje = null;
+
+        if (autor.IdAutor <= 0)
+        {
+            Notificar("warning", "Digite un Id para buscar.");
+            return;
+        }
+
+        var encontrado = await autorService.Buscar(autor.IdAutor);
+        if (encontrado != null)
+            autor = encontrado;
+        else
+            Notificar("danger", "Registro no encontrado.");
+    }
+
+    private async Task Guardar()
+    {
+        mensaje = null;
+
+        // Validaciones adicionales que no se pusieron en anotaciones
+        if (autor.FechaNacimiento.Date >= DateTime.Today)
+        {
+            Notificar("warning", "La fecha de nacimiento debe ser anterior a hoy.");
+            return;
+        }
+
+        var guardo = await autorService.Guardar(autor);
+        if (guardo)
+        {
+            Notificar("success", "Registro guardado correctamente.");
+            Nuevo();
+            Notificar("success", "Registro guardado correctamente.");
+        }
+        else
+        {
+            Notificar("danger", "Error al guardar el registro.");
+        }
+    }
+
+    private async Task Eliminar()
+    {
+        mensaje = null;
+
+        if (autor.IdAutor <= 0)
+        {
+            Notificar("warning", "Busque primero el autor que desea eliminar.");
+            return;
+        }
+
+        var eliminado = await autorService.Eliminar(autor.IdAutor);
+        if (eliminado)
+        {
+            Nuevo();
+            Notificar("success", "Registro eliminado correctamente.");
+        }
+        else
+        {
+            Notificar("danger", "Error al eliminar el registro.");
+        }
+    }
+}

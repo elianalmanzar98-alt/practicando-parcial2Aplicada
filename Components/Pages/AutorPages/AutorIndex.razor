@@ -1,0 +1,122 @@
+@page "/Autor/Index"
+@inject AutorService autorService
+@rendermode InteractiveServer
+
+<PageTitle>Consulta de Autores</PageTitle>
+
+<div class="card shadow-lg m-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Consulta de Autores</h5>
+        <a href="/Autor/Registro" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Crear</a>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-2 mb-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Nombres</label>
+                <input type="text" class="form-control" placeholder="Buscar" @bind="filtroNombre" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Nacionalidad</label>
+                <input type="text" class="form-control" placeholder="Buscar" @bind="filtroNacionalidad" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Nacido desde</label>
+                <input type="date" class="form-control" @bind="fechaDesde" @bind:format="yyyy-MM-dd" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Nacido hasta</label>
+                <input type="date" class="form-control" @bind="fechaHasta" @bind:format="yyyy-MM-dd" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Sueldo mínimo</label>
+                <input type="number" step="0.01" class="form-control" @bind="sueldoMin" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Sueldo máximo</label>
+                <input type="number" step="0.01" class="form-control" @bind="sueldoMax" />
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary" @onclick="Buscar"><i class="bi bi-search"></i> Buscar</button>
+                <button class="btn btn-outline-secondary" @onclick="Restablecer">Restablecer</button>
+            </div>
+        </div>
+
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>IdAutor</th>
+                    <th>Nombres</th>
+                    <th>Nacionalidad</th>
+                    <th>Fecha de Nacimiento</th>
+                    <th class="text-end">Sueldo</th>
+                    <th class="text-center">Opciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in lista)
+                {
+                    <tr>
+                        <td>@a.IdAutor</td>
+                        <td>@a.Nombres</td>
+                        <td>@a.Nacionalidad</td>
+                        <td>@a.FechaNacimiento.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">@a.Sueldo.ToString("N2")</td>
+                        <td class="text-center">
+                            <a href="/Autor/Registro/@a.IdAutor" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="4"><strong>Cantidad de autores:</strong> @lista.Count</td>
+                    <td class="text-end"><strong>Total sueldos:</strong> @lista.Sum(a => a.Sueldo).ToString("N2")</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Autores> lista = new();
+
+    private string filtroNombre = string.Empty;
+    private string filtroNacionalidad = string.Empty;
+    private DateTime? fechaDesde;
+    private DateTime? fechaHasta;
+    private decimal? sueldoMin;
+    private decimal? sueldoMax;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Buscar();
+    }
+
+    private async Task Buscar()
+    {
+        var nombre = filtroNombre.Trim().ToLower();
+        var nacionalidad = filtroNacionalidad.Trim().ToLower();
+        var hastaExclusivo = fechaHasta?.Date.AddDays(1);
+
+        lista = await autorService.Listar(a =>
+            (nombre == "" || a.Nombres.ToLower().Contains(nombre)) &&
+            (nacionalidad == "" || a.Nacionalidad.ToLower().Contains(nacionalidad)) &&
+            (fechaDesde == null || a.FechaNacimiento >= fechaDesde) &&
+            (hastaExclusivo == null || a.FechaNacimiento < hastaExclusivo) &&
+            (sueldoMin == null || a.Sueldo >= sueldoMin) &&
+            (sueldoMax == null || a.Sueldo <= sueldoMax));
+    }
+
+    private async Task Restablecer()
+    {
+        filtroNombre = string.Empty;
+        filtroNacionalidad = string.Empty;
+        fechaDesde = null;
+        fechaHasta = null;
+        sueldoMin = null;
+        sueldoMax = null;
+        await Buscar();
+    }
+}

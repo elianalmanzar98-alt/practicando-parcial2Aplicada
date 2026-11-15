@@ -1,4 +1,8 @@
 using ExamenBlazor.Components;
+using ExamenBlazor.Context;
+using ExamenBlazor.Services;
+using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +10,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+var conStr = builder.Configuration.GetConnectionString("SqlConStr")
+    ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'SqlConStr'.");
+
+builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlite(conStr));
+builder.Services.AddScoped<AutorService>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<Contexto>>();
+    using var dbContext = dbFactory.CreateDbContext();
+    dbContext.Database.EnsureCreated();
+}
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
